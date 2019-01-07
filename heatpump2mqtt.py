@@ -611,7 +611,7 @@ oMQTTClient = mqtt.Client(client_id=sMQTTClientID)
 # Auth
 oMQTTClient.username_pw_set(sUserMQTTBroker, sPasswordMQTTBroker)
 # Connect synchronous
-oMQTTClient.connect(sHostMQTTBroker, 1883)
+oMQTTClient.connect(sHostMQTTBroker, sPortMQTTBroker)
 for iIndex in range(10,iDataFields):	
 	sPublishPath=sPrefixPublishPath+getValueDefByIndex(iIndex)['ValueName']
 	oValue=""
