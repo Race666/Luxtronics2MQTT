@@ -18,3 +18,11 @@ The publisher prefix (default  	**home/heatpump/0** )  could defined at the top 
 - **Value**: is the raw value returned</li>
 - **Description**: is defined for each variable name in aValueDefinition</li>
 - **Details**: further details if available(IP Address, Heatpumptype, OperatingState...)</li>
+
+## Dependencies
+
+Before running the script ensure that the required python modules are installed:
+
+```bash
+pip3 install -r requirements.pip.txt
+```
