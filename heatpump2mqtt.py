@@ -20,7 +20,7 @@ import sys
 import socket
 import struct
 import datetime
-import paho.mqtt.client as mqtt
+import paho.mqtt.publish as publish
 import json
 from configobj import ConfigObj
 from validate import Validator
@@ -607,14 +607,8 @@ rRangeDateAbsolute.extend(range(95,100,1))
 rRangeDateAbsolute.extend(range(111,116,1))
 rRangeDateAbsolute.extend(range(222,227,1))
 
-# ClientID
-oMQTTClient = mqtt.Client(client_id=config['MQTT']['client_id'])
-# Auth
-oMQTTClient.username_pw_set(config['MQTT']['user'], config['MQTT']['password'])
-# Connect synchronous
-oMQTTClient.connect(config['MQTT']['host'], config['MQTT']['port'])
+oPayloads=[]
 for iIndex in range(10,iDataFields):	
-	sPublishPath=config['MQTT']['prefix_publish_path']+getValueDefByIndex(iIndex)['ValueName']
 	oValue=""
 	sDetails=""
 	if iIndex in rRangeDateDiffData:
@@ -660,10 +654,11 @@ for iIndex in range(10,iDataFields):
 		oValue=float(aData[iIndex]/10)
 	# Json object
 	oPayload=json.dumps({"Field":iIndex,"Name":getValueDefByIndex(iIndex)['ValueName'],"Value":oValue,"Description":getValueDefByIndex(iIndex)['Description'],"Details":sDetails})
-	# Publish path
-	oMQTTClient.publish(sPublishPath,oPayload)		
-# Disconnect
-oMQTTClient.disconnect()	
+	sPublishPath=config['MQTT']['prefix_publish_path']+getValueDefByIndex(iIndex)['ValueName']
+	oPayloads.append({"topic":sPublishPath,"payload":oPayload})
+
+# Publish
+publish.multiple(oPayloads, hostname=config['MQTT']['host'], port=config['MQTT']['port'], client_id=config['MQTT']['client_id'], auth={'username':config['MQTT']['user'], 'password':config['MQTT']['password']})
 ###################### Print some  values to Screen ###########################
 # Heatpump Type	
 print(getValueDefByIndex(78)['ValueName'],getValueDefByIndex(78)['Description'],"=", getHeatPumpType(int(aData[78])))
