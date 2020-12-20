@@ -21,6 +21,7 @@ import socket
 import struct
 import datetime
 import paho.mqtt.publish as publish
+import time
 import json
 from configobj import ConfigObj
 from validate import Validator
@@ -608,6 +609,7 @@ rRangeDateAbsolute.extend(range(111,116,1))
 rRangeDateAbsolute.extend(range(222,227,1))
 
 oPayloads=[]
+oMetrics={'dateTime':str(time.time())} # TODO : datetime.datetime.now().strftime('%s.%f')
 for iIndex in range(10,iDataFields):	
 	oValue=""
 	sDetails=""
@@ -652,10 +654,20 @@ for iIndex in range(10,iDataFields):
 	if iIndex in rRangeFloatData:
 		print(getValueDefByIndex(iIndex)['ValueName'],"(",getValueDefByIndex(iIndex)['Description'],") =", (str(float(aData[iIndex]/10))))
 		oValue=float(aData[iIndex]/10)
-	# Json object
-	oPayload=json.dumps({"Field":iIndex,"Name":getValueDefByIndex(iIndex)['ValueName'],"Value":oValue,"Description":getValueDefByIndex(iIndex)['Description'],"Details":sDetails})
-	sPublishPath=config['MQTT']['prefix_publish_path']+getValueDefByIndex(iIndex)['ValueName']
-	oPayloads.append({"topic":sPublishPath,"payload":oPayload})
+	if config['MQTT']['message_type'] != 'all_values_in_one_message':
+		oPayload=json.dumps({"Field":iIndex,"Name":getValueDefByIndex(iIndex)['ValueName'],"Value":oValue,"Description":getValueDefByIndex(iIndex)['Description'],"Details":sDetails})
+		sPublishPath=config['MQTT']['prefix_publish_path']+getValueDefByIndex(iIndex)['ValueName']
+		oPayloads.append({"topic":sPublishPath,"payload":oPayload})
+	else:
+		sValueName=getValueDefByIndex(iIndex)['ValueName']
+		oMetrics[sValueName]=oValue
+		oMetrics["%s_Field" % sValueName]=iIndex
+		oMetrics["%s_Description" % sValueName]=getValueDefByIndex(iIndex)['Description']
+		oMetrics["%s_Details" % sValueName]=sDetails
+
+if config['MQTT']['message_type'] == 'all_values_in_one_message':
+	sPublishPath=config['MQTT']['prefix_publish_path']
+	oPayloads = [{"topic":sPublishPath,"payload":json.dumps(oMetrics)}]
 
 # Publish
 publish.multiple(oPayloads, hostname=config['MQTT']['host'], port=config['MQTT']['port'], client_id=config['MQTT']['client_id'], auth={'username':config['MQTT']['user'], 'password':config['MQTT']['password']})
