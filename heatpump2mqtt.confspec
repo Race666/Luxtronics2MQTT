@@ -1,0 +1,15 @@
+[Heatpump]
+# Heatpump Luxtronik 2.0 IP
+host = string(default='10.200.1.200')
+
+# Heatpump Luxtronik 2.0 port default 8888
+port = integer(default=8888)
+
+# MQTT Broker
+[MQTT]
+host = string(default='10.200.1.210')
+port = integer(default=1883)
+client_id = string(default='heatpump-script')
+user = string(default='openhab')
+password = string(default='ASecurePassword')
+prefix_publish_path = string(default='home/heatpump/0/')

@@ -1,3 +1,4 @@
 setuptools
 wheel
 paho-mqtt
+configobj
