@@ -16,24 +16,23 @@
 # License:
 # Version: v20180315-191000
 #
+import sys
 import socket
 import struct
 import datetime
 import paho.mqtt.client as mqtt
 import json
+from configobj import ConfigObj
+from validate import Validator
 # import http.client
-##################### Constants ########################
-# Heatpump Luxtronik 2.0 IP
-sHostHeatpump = '10.200.1.200'
-# Heatpump Luxtronik 2.0 port default 8888
-iPortHeatpump = 8888
-# MQTT Broker
-sHostMQTTBroker = '10.200.1.210'
-sPortMQTTBroker = 1883
-sMQTTClientID = 'heatpump-script'
-sUserMQTTBroker = 'openhab'
-sPasswordMQTTBroker = 'ASecurePassword'
-sPrefixPublishPath='home/heatpump/0/'
+##################### Config ########################
+config=ConfigObj('heatpump2mqtt.conf', configspec='heatpump2mqtt.confspec')
+
+validator = Validator()
+if config.validate(validator) != True:
+    print( 'Config file validation failed!')
+    sys.exit(1)
+
 ########################################## Values #############################
 # Source
 #  https://service.knx-user-forum.de/?comm=download&id=19000682
@@ -555,7 +554,7 @@ aData = []
 # Socket
 oSocket = socket.socket( socket.AF_INET, socket.SOCK_STREAM)
 # Connect to Heatpump
-oSocket.connect((sHostHeatpump, iPortHeatpump))
+oSocket.connect((config['Heatpump']['host'], config['Heatpump']['port']))
 
 # Send to get state
 oSocket.send( struct.pack( '!i', 3004))
@@ -609,13 +608,13 @@ rRangeDateAbsolute.extend(range(111,116,1))
 rRangeDateAbsolute.extend(range(222,227,1))
 
 # ClientID
-oMQTTClient = mqtt.Client(client_id=sMQTTClientID)
+oMQTTClient = mqtt.Client(client_id=config['MQTT']['client_id'])
 # Auth
-oMQTTClient.username_pw_set(sUserMQTTBroker, sPasswordMQTTBroker)
+oMQTTClient.username_pw_set(config['MQTT']['user'], config['MQTT']['password'])
 # Connect synchronous
-oMQTTClient.connect(sHostMQTTBroker, sPortMQTTBroker)
+oMQTTClient.connect(config['MQTT']['host'], config['MQTT']['port'])
 for iIndex in range(10,iDataFields):	
-	sPublishPath=sPrefixPublishPath+getValueDefByIndex(iIndex)['ValueName']
+	sPublishPath=config['MQTT']['prefix_publish_path']+getValueDefByIndex(iIndex)['ValueName']
 	oValue=""
 	sDetails=""
 	if iIndex in rRangeDateDiffData:
